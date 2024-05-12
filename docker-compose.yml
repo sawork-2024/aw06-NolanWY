@@ -36,8 +36,6 @@ services:
 
   seata-server:
     image: seataio/seata-server:latest
-    ports:
-      - "7091:7091"
     healthcheck:
       test: [ "CMD", "curl", "-I", "http://seata-server:7091" ]
       interval: 5s
@@ -54,8 +52,8 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
-    ports:
-      - "3306:3306"
+    volumes:
+      - ./database/products-service-db-init.sql:/docker-entrypoint-initdb.d/products-service-db-init.sql
 
   orders-service-db:
     image: mysql:latest
@@ -67,8 +65,8 @@ services:
       interval: 5s
       timeout: 10s
       retries: 10
-    ports:
-      - "3307:3306"
+    volumes:
+      - ./database/orders-service-db-init.sql:/docker-entrypoint-initdb.d/orders-service-db-init.sql
 
   products-cache-server:
     image: "redis:latest"
@@ -89,11 +87,13 @@ services:
         condition: service_healthy
       products-cache-server:
         condition: service_started
-    healthcheck:
-      test: "curl --fail --silent products-service:8080/actuator/health | grep UP || exit 1"
-      interval: 10s
-      timeout: 10s
-      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: 1.0
+      mode: replicated
+      replicas: 4
+      endpoint_mode: dnsrr
 
   orders-service:
     image: webpos-orders-service:latest
@@ -109,11 +109,10 @@ services:
         condition: service_healthy
       seata-server:
         condition: service_healthy
-    healthcheck:
-      test: "curl --fail --silent products-service:8080/actuator/health | grep UP || exit 1"
-      interval: 10s
-      timeout: 10s
-      retries: 10
+    deploy:
+      resources:
+        limits:
+          cpus: 4.0
 
   api-gateway:
     image: webpos-api-gateway:latest
@@ -124,10 +123,6 @@ services:
       config-server:
         condition: service_healthy
       discovery-server:
-        condition: service_healthy
-      products-service:
-        condition: service_healthy
-      orders-service:
         condition: service_healthy
     ports:
       - "8080:8080"

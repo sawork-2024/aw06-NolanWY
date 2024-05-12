@@ -1,5 +1,7 @@
 server:
   forward-headers-strategy: framework
+  tomcat:
+    connection-timeout: 20000
 
 eureka:
   client:
@@ -11,11 +13,6 @@ spring:
     url: jdbc:mysql://orders-service-db:3306/orders
     username: root
     password: gbhre2-fdnji8
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath*:db/schema.sql
-      data-locations: classpath*:db/data.sql
   jpa:
     hibernate:
       ddl-auto: none

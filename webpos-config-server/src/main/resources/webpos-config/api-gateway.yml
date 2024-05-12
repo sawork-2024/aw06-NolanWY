@@ -12,6 +12,11 @@ eureka:
 spring:
   cloud:
     gateway:
+      httpclient:
+        response-timeout: 20s
+        pool:
+          max-idle-time: 10000
+          max-connections: 200
       routes:
         - id: products-service
           uri: lb://products-service

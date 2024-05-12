@@ -14,4 +14,4 @@ RUN mvn -B clean package -pl webpos-api-gateway -am -DskipTests=true
 FROM eclipse-temurin:21-jre AS run
 WORKDIR /usr/src/app
 COPY --from=build /usr/src/app/webpos-api-gateway/target/webpos-api-gateway-1.0-SNAPSHOT.jar .
-CMD java -server -jar webpos-api-gateway-1.0-SNAPSHOT.jar
+CMD java -server -jar -Dreactor.netty.pool.leasingStrategy=lifo webpos-api-gateway-1.0-SNAPSHOT.jar

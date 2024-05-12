@@ -1,9 +1,14 @@
 package pers.nolan.webpos.service;
 
+import io.github.resilience4j.circuitbreaker.CircuitBreakerConfig;
+import io.github.resilience4j.timelimiter.TimeLimiterConfig;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory;
+import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JConfigBuilder;
+import org.springframework.cloud.client.circuitbreaker.CircuitBreaker;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pers.nolan.webpos.model.Category;
@@ -12,6 +17,7 @@ import pers.nolan.webpos.model.Product;
 import pers.nolan.webpos.repository.CategoryRepository;
 import pers.nolan.webpos.repository.ProductRepository;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,11 +31,25 @@ public class ProductServiceImpl implements ProductService {
 
     private final CategoryRepository categoryRepository;
 
+    private final CircuitBreaker circuitBreaker;
+
     @Autowired
     public ProductServiceImpl(ProductRepository productRepository,
-                              CategoryRepository categoryRepository) {
+                              CategoryRepository categoryRepository,
+                              Resilience4JCircuitBreakerFactory circuitBreakerFactory) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
+
+        TimeLimiterConfig timeLimiterConfig = TimeLimiterConfig.custom().timeoutDuration(Duration.ofSeconds(5)).build();
+        CircuitBreakerConfig circuitBreakerConfig = CircuitBreakerConfig.custom()
+                                                                        .failureRateThreshold(50)
+                                                                        .waitDurationInOpenState(Duration.ofMillis(1000))
+                                                                        .slidingWindowSize(2)
+                                                                        .build();
+        circuitBreakerFactory.configureDefault(id -> new Resilience4JConfigBuilder(id).timeLimiterConfig(timeLimiterConfig)
+                                                                                      .circuitBreakerConfig(circuitBreakerConfig)
+                                                                                      .build());
+        this.circuitBreaker = circuitBreakerFactory.create("circuitbreaker");
     }
 
     @Override
@@ -51,7 +71,8 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public List<Product> searchProducts(String keyword) {
-        return productRepository.findByNameContainingIgnoreCase(keyword);
+        return circuitBreaker.run(() -> productRepository.findByNameContainingIgnoreCase(keyword),
+                throwable -> List.of());
     }
 
     @Override
