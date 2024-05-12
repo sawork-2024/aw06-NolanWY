@@ -1,5 +1,6 @@
 package pers.nolan;
 
+import org.springdoc.core.properties.AbstractSwaggerUiConfigProperties.SwaggerUrl;
 import org.springdoc.core.properties.SwaggerUiConfigParameters;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,7 +14,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.springdoc.core.properties.AbstractSwaggerUiConfigProperties.SwaggerUrl;
 import static org.springdoc.core.utils.Constants.DEFAULT_API_DOCS_URL;
 
 @SpringBootApplication
