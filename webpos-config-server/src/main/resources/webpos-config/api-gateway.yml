@@ -1,0 +1,48 @@
+server:
+  port: 8080
+  forward-headers-strategy: framework
+
+eureka:
+  client:
+    registerWithEureka: true
+    fetchRegistry: true
+    serviceUrl:
+      defaultZone: http://discovery-server:8761/eureka
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: products-service
+          uri: lb://products-service
+          predicates:
+            - Path=/api/products/**, /api/categories/**, /products-service-api-docs/**
+        - id: orders-service
+          uri: lb://orders-service
+          predicates:
+            - Path=/api/orders/**, /orders-service-api-docs/**
+
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowCredentials: false
+            allowedOriginPatterns: "*"
+            allowedHeaders: "*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - HEAD
+              - OPTIONS
+              - PATCH
+
+springdoc:
+  swagger-ui:
+    use-root-path: true
+    urls:
+      - name: products
+        url: /products-service-api-docs
+      - name: orders
+        url: /orders-service-api-docs
+    cache:
+      disabled: true

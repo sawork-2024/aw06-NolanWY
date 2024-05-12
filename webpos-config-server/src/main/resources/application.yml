@@ -1,0 +1,11 @@
+server:
+  port: 20151
+
+spring:
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/webpos-config
+  profiles:
+    active: native
